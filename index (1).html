@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI-Verktyg: Claude — Projekt VT26</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #141414;
+      --surface2: #1c1c1c;
+      --border: #2a2a2a;
+      --accent: #c8f060;
+      --accent2: #60c8f0;
+      --text: #e8e8e0;
+      --muted: #888;
+      --serif: 'DM Serif Display', serif;
+      --mono: 'DM Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-weight: 300;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 4rem 2rem;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -200px; right: -200px;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(200,240,96,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -100px; left: -100px;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(96,200,240,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+      animation: fadeUp 0.9s ease both;
+    }
+
+    .tag {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 0.25rem 0.75rem;
+      border-radius: 2px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+    }
+
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.8rem, 7vw, 6rem);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: 1.1rem;
+      color: var(--muted);
+      max-width: 500px;
+      margin-bottom: 3rem;
+    }
+
+    .hero-meta {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .meta-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .meta-value {
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,13,13,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+    }
+
+    nav ul {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      list-style: none;
+      gap: 0;
+    }
+
+    nav a {
+      display: block;
+      padding: 1rem 1.2rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+      border-bottom: 2px solid transparent;
+    }
+
+    nav a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* SECTIONS */
+    section {
+      padding: 6rem 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-inner {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .section-number {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    h2 {
+      font-family: var(--serif);
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.1;
+      margin-bottom: 2.5rem;
+    }
+
+    h3 {
+      font-family: var(--serif);
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+      margin-top: 2.5rem;
+    }
+
+    p { margin-bottom: 1.2rem; color: #c8c8c0; }
+
+    /* LINK */
+    .tool-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--accent2);
+      text-decoration: none;
+      border: 1px solid var(--accent2);
+      padding: 0.5rem 1rem;
+      border-radius: 2px;
+      transition: background 0.2s, color 0.2s;
+      margin-top: 1rem;
+    }
+
+    .tool-link:hover { background: var(--accent2); color: #000; }
+
+    /* FEATURE GRID */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      padding: 1.8rem;
+      transition: background 0.2s;
+    }
+
+    .feature-card:hover { background: var(--surface2); }
+
+    .feature-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .feature-card h4 {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-card p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    /* USE CASE STEPS */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-top: 2rem;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 60px 1fr;
+      gap: 1.5rem;
+      background: var(--surface);
+      padding: 2rem;
+      border-left: 2px solid transparent;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .step:hover { border-left-color: var(--accent); background: var(--surface2); }
+
+    .step-num {
+      font-family: var(--serif);
+      font-size: 2.5rem;
+      color: var(--border);
+      line-height: 1;
+      user-select: none;
+    }
+
+    .step h4 {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .step p { font-size: 0.92rem; margin: 0; color: #c8c8c0; }
+
+    .prompt-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      padding: 1rem 1.2rem;
+      margin-top: 0.8rem;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--accent);
+    }
+
+    .response-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent2);
+      padding: 1rem 1.2rem;
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+      color: #aaa;
+      font-style: italic;
+    }
+
+    /* SCREENSHOTS */
+    .screenshots {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .screenshot {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .screenshot img {
+      width: 100%;
+      display: block;
+      filter: brightness(0.9);
+      transition: filter 0.3s;
+    }
+
+    .screenshot:hover img { filter: brightness(1); }
+
+    .screenshot-caption {
+      padding: 0.8rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ANALYSIS */
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+
+    .analysis-card {
+      background: var(--surface);
+      padding: 2rem;
+    }
+
+    .analysis-card h4 {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+
+    .analysis-card.pos h4 { color: var(--accent); }
+    .analysis-card.neg h4 { color: #f06060; }
+
+    .analysis-card ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .analysis-card li {
+      font-size: 0.88rem;
+      color: var(--muted);
+      padding-left: 1.2rem;
+      position: relative;
+    }
+
+    .analysis-card.pos li::before { content: '+'; position: absolute; left: 0; color: var(--accent); }
+    .analysis-card.neg li::before { content: '−'; position: absolute; left: 0; color: #f06060; }
+
+    /* COST */
+    .cost-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+      font-size: 0.88rem;
+    }
+
+    .cost-table th {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      text-align: left;
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cost-table td {
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: #c8c8c0;
+    }
+
+    .cost-table tr:hover td { background: var(--surface); }
+
+    .badge {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .badge-free { background: rgba(200,240,96,0.15); color: var(--accent); }
+    .badge-paid { background: rgba(240,96,96,0.12); color: #f08080; }
+
+    /* FOOTER */
+    footer {
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+
+    footer p {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    @media (max-width: 600px) {
+      .analysis-grid { grid-template-columns: 1fr; }
+      nav ul { overflow-x: auto; }
+      .step { grid-template-columns: 40px 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <section class="hero" id="top">
+    <div class="hero-inner">
+      <span class="tag">Projekt AI-Verktyg · VT26</span>
+      <h1>There is an AI<br>for <em>that</em>.</h1>
+      <p class="hero-sub">En granskning av Claude — Anthropics AI-assistent för text, studier och problemlösning.</p>
+      <div class="hero-meta">
+        <div class="meta-item">
+          <span class="meta-label">Verktyg</span>
+          <span class="meta-value">Claude (claude.ai)</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Use case</span>
+          <span class="meta-value">Studiehjälp — Privatjuridik</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Kurs</span>
+          <span class="meta-value">AI-Verktyg VT26</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NAV -->
+  <nav>
+    <ul>
+      <li><a href="#verktyget">Verktyget</a></li>
+      <li><a href="#usecase">Use Case</a></li>
+      <li><a href="#analys">Analys</a></li>
+      <li><a href="#kostnad">Kostnad</a></li>
+    </ul>
+  </nav>
+
+  <!-- SECTION 1: VERKTYGET -->
+  <section id="verktyget">
+    <div class="section-inner reveal">
+      <span class="section-number">01 — Verktyget</span>
+      <h2>Vad är Claude?</h2>
+
+      <p>Claude är en AI-assistent utvecklad av det amerikanska företaget Anthropic. Till skillnad från många andra AI-verktyg är Claude inte specialiserat på ett enda område — det är en generalist som kan föra djupa samtal, förklara komplexa ämnen, skriva texter, hjälpa till med kod och mycket mer.</p>
+
+      <p>Claude är tillgängligt direkt i webbläsaren via <strong>claude.ai</strong> och kräver inget nedladdning. Det fungerar som en chatt där du skriver dina frågor och Claude svarar direkt.</p>
+
+      <a class="tool-link" href="https://claude.ai" target="_blank">↗ claude.ai</a>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">📚</div>
+          <h4>Studiehjälp</h4>
+          <p>Förklarar svåra begrepp på ett enkelt och anpassat sätt.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">✍️</div>
+          <h4>Textgenerering</h4>
+          <p>Skriver, förbättrar och sammanfattar texter av alla slag.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💬</div>
+          <h4>Dialog</h4>
+          <p>Minns konversationen och kan följa upp med djupare svar.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔍</div>
+          <h4>Analys</h4>
+          <p>Kan analysera dokument, kod och argument med hög precision.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2: USE CASE -->
+  <section id="usecase">
+    <div class="section-inner reveal">
+      <span class="section-number">02 — Use Case</span>
+      <h2>Studiehjälp i<br>Privatjuridik</h2>
+
+      <p>Målet med testet var att använda Claude som studieverktyg inför ett prov i privatjuridik. Istället för att bara läsa en lärobok testades om Claude kan förklara juridiska begrepp på ett begripligt sätt — och om det kan göra studier mer interaktiva genom quiz-frågor.</p>
+
+      <div class="steps">
+
+        <div class="step">
+          <span class="step-num">01</span>
+          <div>
+            <h4>Utgångspunkt</h4>
+            <p>Jag visste att vi jobbat med avtalsrätt och köprätt i kursen, men hade svårt att hålla isär begreppen. Jag beslutade att testa om Claude kunde klargöra skillnaden.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-num">02</span>
+          <div>
+            <h4>Fråga 1 — Grundbegrepp</h4>
+            <div class="prompt-box">» Vad är skillnaden mellan avtalsrätt och köprätt? Förklara enkelt för en gymnasieelev.</div>
+            <div class="response-box">Claude svarade med en tydlig metafor: avtalsrätten är "det stora paraplyet" som styr alla avtal, medan köprätten är ett specialområde under det som handlar specifikt om köp av varor. Det tog också upp Avtalslagen (1915) och Köplagen (1990) i ett begripligt sammanhang.</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-num">03</span>
+          <div>
+            <h4>Fråga 2 — Vardagsexempel</h4>
+            <div class="prompt-box">» Kan du ge mig ett vardagsexempel på när avtalslagen används?</div>
+            <div class="response-box">Claude använde ett Zalando-köp som exempel: när du klickar "Bekräfta köp" ingår du ett avtal. Om butiken sedan försöker ta mer betalt bryter de mot avtalet — och avtalslagen skyddar dig. Väldigt konkret och lätt att förstå.</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-num">04</span>
+          <div>
+            <h4>Fråga 3 — Interaktiv Quiz</h4>
+            <div class="prompt-box">» Gör en kort quiz med 3 frågor om avtalsrätt och köprätt som passar för en gymnasieelev.</div>
+            <div class="response-box">Claude skapade en interaktiv quiz med tre realistiska scenarion: en cykel köpt på nätet, skillnaden mellan avtalsrätt och köprätt, samt en telefon som gick sönder. Varje svar kom med en pedagogisk förklaring. Resultat: 3/3.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <h3>Skärmdumpar från testet</h3>
+      <div class="screenshots">
+        <div class="screenshot">
+          <img src="preview.webp" alt="Frågorna som ställdes till Claude" />
+          <div class="screenshot-caption">De tre frågorna som ställdes</div>
+        </div>
+        <div class="screenshot">
+          <img src="preview (1).webp" alt="Svar om avtalsrätt vs köprätt" />
+          <div class="screenshot-caption">Svar — Avtalsrätt vs Köprätt</div>
+        </div>
+        <div class="screenshot">
+          <img src="preview (2).webp" alt="Vardagsexempel Zalando" />
+          <div class="screenshot-caption">Vardagsexempel — Zalando</div>
+        </div>
+        <div class="screenshot">
+          <img src="preview (3).webp" alt="Quiz fråga 1" />
+          <div class="screenshot-caption">Quiz — Fråga 1 av 3</div>
+        </div>
+        <div class="screenshot">
+          <img src="preview (4).webp" alt="Quiz fråga 2" />
+          <div class="screenshot-caption">Quiz — Fråga 2 av 3</div>
+        </div>
+        <div class="screenshot">
+          <img src="preview (5).webp" alt="Quiz fråga 3" />
+          <div class="screenshot-caption">Quiz — Fråga 3 av 3</div>
+        </div>
+        <div class="screenshot">
+          <img src="preview (6).webp" alt="Slutresultat 3/3" />
+          <div class="screenshot-caption">Slutresultat — 3/3</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3: ANALYS -->
+  <section id="analys">
+    <div class="section-inner reveal">
+      <span class="section-number">03 — Analys</span>
+      <h2>Slutlig analys</h2>
+
+      <p>Testet visade att Claude fungerar mycket bra som studieverktyg. Det som stack ut mest var förmågan att anpassa svårhetsnivån — när jag bad om en gymnasieanpassad förklaring levererade Claude precis det, utan att förenkla för mycket eller bli onödigt teknisk.</p>
+
+      <p>Den interaktiva quizen var ett oväntat plus. Istället för att bara ge en statisk lista med svar skapade Claude ett dynamiskt studieredskap som faktiskt testade kunskapen. Det är ett bra exempel på hur AI kan göra studier mer engagerande än att bara läsa en bok.</p>
+
+      <div class="analysis-grid">
+        <div class="analysis-card pos">
+          <h4>✓ Fördelar</h4>
+          <ul>
+            <li>Förklarar komplexa begrepp på ett enkelt sätt</li>
+            <li>Anpassar sig till din nivå och ditt syfte</li>
+            <li>Kan skapa interaktivt studiematerial (quiz)</li>
+            <li>Ger vardagsexempel som gör abstrakt teori konkret</li>
+            <li>Fungerar direkt i webbläsaren, inget att installera</li>
+            <li>Gratis nivå räcker långt för vanlig studiehjälp</li>
+          </ul>
+        </div>
+        <div class="analysis-card neg">
+          <h4>− Nackdelar</h4>
+          <ul>
+            <li>Kan ibland vara för utförlig — man måste be om kortare svar</li>
+            <li>Ingen garanti att juridisk information är helt korrekt</li>
+            <li>Gratisnivån har begränsat antal meddelanden per dag</li>
+            <li>Kan inte söka på internet i gratisläge</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Målgrupper</h3>
+      <p>Claude passar utmärkt för gymnasieelever och studenter som vill förstå svåra ämnen snabbare. Det fungerar också bra för yrkesverksamma som behöver snabba förklaringar, för skribenter som vill ha hjälp med text, och för programmerare som fastnat med ett kodproblem.</p>
+    </div>
+  </section>
+
+  <!-- SECTION 4: KOSTNAD -->
+  <section id="kostnad">
+    <div class="section-inner reveal">
+      <span class="section-number">04 — Kostnad</span>
+      <h2>Kostar det något?</h2>
+
+      <p>Claude har en gratis nivå som är tillräcklig för de flesta studenter. För mer avancerad användning finns betalda abonnemang.</p>
+
+      <table class="cost-table">
+        <thead>
+          <tr>
+            <th>Plan</th>
+            <th>Pris</th>
+            <th>Inkluderar</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Claude Free <span class="badge badge-free">Gratis</span></td>
+            <td>0 kr/mån</td>
+            <td>Begränsat antal meddelanden per dag, tillgång till Claude Sonnet</td>
+          </tr>
+          <tr>
+            <td>Claude Pro <span class="badge badge-paid">Betald</span></td>
+            <td>ca 220 kr/mån</td>
+            <td>Fler meddelanden, prioritet, tillgång till Claude Opus (kraftfullare modell)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="margin-top:1.5rem;">För studieändamål räcker gratisversionen mer än väl. Det behövs inga tokens eller engångsköp — du registrerar ett konto och börjar använda direkt.</p>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>Projekt AI-Verktyg · VT26 · claude.ai</p>
+  </footer>
+
+  <script>
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    reveals.forEach(r => observer.observe(r));
+  </script>
+
+</body>
+</html>
